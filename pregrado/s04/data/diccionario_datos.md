@@ -1,6 +1,8 @@
-# Diccionario de datos — Ames Housing (S04, Regresión Lineal Múltiple)
+# Diccionario de datos — Ames Housing + Insurance (S04, Regresión Lineal Múltiple)
 
-> **Fecha de verificación de fuentes: 18/07/2026.** Descarga y validación reales con el venv del curso (`descargar_datos.py`). PROHIBIDO inventar datos: todas las cifras de este documento se OBSERVARON al cargar los archivos.
+> **Fecha de verificación de fuentes: 18/07/2026 (Ames) y 14/09/2026 (Insurance).** Descarga y validación reales con el venv del curso (`descargar_datos.py`). PROHIBIDO inventar datos: todas las cifras de este documento se OBSERVARON al cargar los archivos.
+>
+> **Regla del usuario (13-14/09/2026):** el notebook resuelve un solo dataset completo (el de réplica del paper, `AmesHousing.csv`); el dataset de negocio del entregable debe ser **distinto** al que el notebook ya resuelve. `AmesHousing_kaggle.csv` es la misma base de datos que `AmesHousing.csv` en otra muestra —no un caso de negocio genuino—, así que el entregable pasa a usar **`insurance.csv`** (Sección 3b), un dataset de una aseguradora de salud sin relación con Ames. `AmesHousing_kaggle.csv` queda documentado (Sección 3) pero ya no es el dataset del entregable.
 
 ## 1. Qué es Ames Housing y por qué se usa
 
@@ -19,7 +21,7 @@ Registro de **ventas residenciales en la ciudad de Ames, Iowa (EE. UU.), entre 2
 | Archivo | Rol | Filas × Cols | Fuente (verificada 18/07/2026) | SHA256 del archivo guardado |
 |---|---|---|---|---|
 | `AmesHousing.csv` | **Replicación del paper** (ancla los números de De Cock) | **2930 × 82** | Journal of Statistics Education (hosting del autor): `http://jse.amstat.org/v19n3/decock/AmesHousing.txt` (tab-sep). Fallback: Rdatasets `openintro/ames`. | `5d5d25c60c165143749013a89a86c604fd55bac07c2a2e6e0d6c9dacf65e6226` |
-| `AmesHousing_kaggle.csv` | **Negocio / laboratorio** (nombres estilo Kaggle) | **1460 × 81** | `sklearn.datasets.fetch_openml(data_id=42165)` (OpenML espeja el *train* de la competencia Kaggle *House Prices*). | `25273b2e062575f43bad23211f4f9d0df28502c95cd8cc84a4172bfe552b6e93` |
+| `AmesHousing_kaggle.csv` | Muestra alterna de la misma base (**ya no es el dataset de negocio** — ver nota arriba y Sección 3b) | **1460 × 81** | `sklearn.datasets.fetch_openml(data_id=42165)` (OpenML espeja el *train* de la competencia Kaggle *House Prices*). | `25273b2e062575f43bad23211f4f9d0df28502c95cd8cc84a4172bfe552b6e93` |
 
 - **SHA256 de la fuente primaria (bytes crudos del.txt de JSE):** `6cfe6cb525ba437de428653a1040e2aed7d696640bf75203786a6d7a0e67cfcc`.
 - El subconjunto Kaggle (1460) es un **~50 % del conjunto completo**; por eso reproduce la correlación pero **no** las 5 ventas atípicas exactas (solo contiene 4 de las 5). Para replicar a De Cock se usa SIEMPRE `AmesHousing.csv` (2930).
@@ -40,7 +42,35 @@ Las dos versiones nombran las mismas variables de forma distinta:
 
 El notebook usa `AmesHousing.csv` para la réplica (nombres con espacios) y puede usar cualquiera de los dos para el laboratorio; conviene documentar en clase esta diferencia de convención.
 
-## 4. Variables clave (significado de negocio)
+## 3b. `insurance.csv` — dataset de negocio del entregable (nuevo, 14/09/2026)
+
+- **Qué es:** registro de **1338 asegurados** de una aseguradora de salud en EE. UU., con la prima anual facturada (`charges`) y seis variables demográficas/de comportamiento. Publicado originalmente por Brett Lantz en *Machine Learning with R* (Packt, 2013).
+- **Rol:** dataset de negocio del entregable — el notebook no lo usa; el alumno lo trabaja por primera vez en el entregable, aplicando ahí las técnicas de regresión múltiple, dummies, interacción y diagnóstico de supuestos que el notebook enseñó sobre `AmesHousing.csv`.
+- **Procedencia y licencia:** **dominio público**, declarado por el propio autor («all of these datasets are in the public domain but simply needed some cleaning up and recoding», Lantz 2013). Mirror verificado: `https://raw.githubusercontent.com/stedy/Machine-Learning-with-R-datasets/master/insurance.csv` (también distribuido como «Medical Cost Personal Datasets» en Kaggle).
+- **Dimensiones verificadas (14/09/2026):** 1338 filas × 7 columnas, sin valores faltantes.
+- **SHA256 (archivo local):** `505c1cbc2e63d0363bac59501563df2530aadf4cdb9cfee226f4ef32f5468281`.
+- **Caso de negocio:** aseguradora de salud privada que necesita tarifar el riesgo de un asegurado y priorizar la revisión de pólizas mal tarifadas — encaja con la regla del curso de casos de negocio en industria privada (aseguradora), nunca gobierno/municipalidad.
+
+| Columna | Tipo | Significado de negocio |
+|---|---|---|
+| `age` | entero | Edad del asegurado (18–64 años). |
+| `sex` | categórica (2) | Sexo (`female`/`male`). Categoría de referencia recomendada: `female`. |
+| `bmi` | decimal | Índice de masa corporal (kg/m²). Eje de la interacción con `smoker`. |
+| `children` | entero | Número de hijos/dependientes cubiertos por la póliza (0–5). |
+| `smoker` | categórica (2) | Condición de fumador (`yes`/`no`). **El predictor individual más fuerte de `charges`**; categoría de referencia recomendada: `no`. |
+| `region` | categórica (4) | Región de residencia en EE. UU. (`northeast`, `northwest`, `southeast`, `southwest`). Categoría de referencia recomendada: `northeast`. |
+| `charges` | decimal | **Variable objetivo.** Prima médica anual facturada, en USD (326–63 770; mediana 9 382, media 13 270). Fuertemente asimétrica a la derecha — candidata directa a `log(charges)`. |
+
+**Valores observados de viabilidad (venv del curso, 14/09/2026)**, `log(charges) ~ age + bmi + children + sex + smoker + region + smoker:bmi`:
+- R² = 0.7835 (ajustado 0.7820); sin la interacción, R² = 0.7679 (ajustado 0.7666).
+- VIF: todos los predictores < 1.7 (sin multicolinealidad severa — contraste útil con `communities.csv` de S05, donde sí la hay).
+- Breusch-Pagan: LM ≈ 70.49, p < 0.001 (rechaza homocedasticidad; corrección = errores robustos HC3).
+- Durbin-Watson ≈ 2.036 (sin autocorrelación — corte transversal sin orden significativo).
+- CV 5-fold (RMSE en USD, retransformado con smearing de Duan): sin interacción 9571 ± 960; con interacción 10387 ± 1325 (el R² in-sample sube con la interacción, pero el RMSE de CV no mejora — ver nota de honestidad del entregable).
+- Cook's D > 4/n: 93 de 1338 observaciones (mayormente fumadores de BMI alto).
+- Coeficiente de `smoker_yes` (modelo sin interacción, log): β ≈ 1.5543 → exacto $100(e^{1.5543}-1)\approx 373\,\%$ (≈4.7× la prima, *ceteris paribus*).
+
+## 4. Variables clave (significado de negocio) — Ames Housing (réplica del notebook)
 
 > Nombres canónicos de De Cock (`AmesHousing.csv`). Entre paréntesis, el nombre Kaggle si difiere.
 

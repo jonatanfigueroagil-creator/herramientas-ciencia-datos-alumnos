@@ -66,7 +66,8 @@ else:
     DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 
 FULL_FILE = os.path.join(DATA_DIR, "AmesHousing.csv")          # 2930 x 82 (paper)
-KAGGLE_FILE = os.path.join(DATA_DIR, "AmesHousing_kaggle.csv")  # 1460 x 81 (negocio)
+KAGGLE_FILE = os.path.join(DATA_DIR, "AmesHousing_kaggle.csv")  # 1460 x 81 (muestra alterna, ya no es "negocio")
+INSURANCE_FILE = os.path.join(DATA_DIR, "insurance.csv")       # 1338 x 7 (negocio: entregable)
 
 # --- Fuentes del conjunto COMPLETO (paper) ---
 JSE_URL = "http://jse.amstat.org/v19n3/decock/AmesHousing.txt"  # tab-separado
@@ -76,8 +77,17 @@ FALLBACK_FULL_URL = (
     "https://vincentarelbundock.github.io/Rdatasets/csv/openintro/ames.csv"
 )
 
-# --- Fuente del subconjunto Kaggle (negocio) ---
+# --- Fuente del subconjunto Kaggle (muestra alterna, ya no es "negocio") ---
 OPENML_DATA_ID = 42165
+
+# --- Fuente de insurance.csv (negocio: entregable, 14/09/2026) ---
+INSURANCE_URL = (
+    "https://raw.githubusercontent.com/stedy/Machine-Learning-with-R-datasets/"
+    "master/insurance.csv"
+)
+SHA256_INSURANCE = "505c1cbc2e63d0363bac59501563df2530aadf4cdb9cfee226f4ef32f5468281"
+INSURANCE_KEY_COLS = ["age", "sex", "bmi", "children", "smoker", "region", "charges"]
+INSURANCE_ROWS, INSURANCE_COLS = 1338, 7
 
 # Columnas clave (nombres canonicos De Cock, CON espacios) que deben existir
 # en el conjunto completo para poder replicar y hacer el laboratorio.
@@ -220,6 +230,29 @@ def obtener_ames_kaggle() -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
+# Descarga de insurance.csv (negocio del entregable, distinto al que el
+# notebook resuelve — regla del usuario, 13-14/09/2026)
+# ---------------------------------------------------------------------------
+def obtener_insurance() -> pd.DataFrame:
+    print("== INSURANCE 1338x7 (negocio: entregable, aseguradora de salud) ==")
+    if _csv_valido(INSURANCE_FILE, INSURANCE_KEY_COLS, INSURANCE_ROWS, INSURANCE_COLS):
+        print(f"  = presente y verificado: {INSURANCE_FILE}")
+        return pd.read_csv(INSURANCE_FILE)
+
+    raw = _fetch(INSURANCE_URL)
+    sha = sha256_bytes(raw)
+    if sha != SHA256_INSURANCE:
+        print(f"  ! AVISO: SHA256 observado ({sha}) difiere del esperado "
+              f"({SHA256_INSURANCE}) — el mirror pudo cambiar; se continua igual.")
+    df = pd.read_csv(io.BytesIO(raw))
+    _verificar_esquema(df, INSURANCE_KEY_COLS, INSURANCE_ROWS, INSURANCE_COLS, "insurance (Lantz)")
+    df.to_csv(INSURANCE_FILE, index=False, encoding="utf-8")
+    print(f"  + descargado de {INSURANCE_URL}")
+    print(f"    -> {INSURANCE_FILE}")
+    return df
+
+
+# ---------------------------------------------------------------------------
 # SMOKE de VIABILIDAD de la replica (reporta valores OBSERVADOS, NO define targets)
 # ---------------------------------------------------------------------------
 def smoke():
@@ -296,15 +329,18 @@ def main(argv=None) -> int:
     full = obtener_ames_full()
     print()
     kag = obtener_ames_kaggle()
+    print()
+    ins = obtener_insurance()
     print("\n== Resumen ==")
-    print(f"AmesHousing.csv        (paper)   : {full.shape[0]} x {full.shape[1]}")
-    print(f"AmesHousing_kaggle.csv (negocio) : {kag.shape[0]} x {kag.shape[1]}")
-    for p in (FULL_FILE, KAGGLE_FILE):
+    print(f"AmesHousing.csv        (paper)          : {full.shape[0]} x {full.shape[1]}")
+    print(f"AmesHousing_kaggle.csv (muestra alterna) : {kag.shape[0]} x {kag.shape[1]}")
+    print(f"insurance.csv          (negocio)        : {ins.shape[0]} x {ins.shape[1]}")
+    for p in (FULL_FILE, KAGGLE_FILE, INSURANCE_FILE):
         if os.path.exists(p):
             print(f"  SHA256({os.path.basename(p)}) = {sha256_file(p)}")
     if "--smoke" in argv:
         smoke()
-    print("\nVerificacion de fuentes: 18/07/2026. Todo OK.")
+    print("\nVerificacion de fuentes: 18/07/2026 (Ames), 14/09/2026 (Insurance). Todo OK.")
     return 0
 
 
