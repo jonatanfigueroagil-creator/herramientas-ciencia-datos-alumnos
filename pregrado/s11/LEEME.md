@@ -30,4 +30,4 @@ al ejecutar el cuaderno, y producirlos es parte del laboratorio.
 
 ---
 
-*Herramientas para la Ciencia de Datos — Facultad de Negocios, UPC. Paquete generado el 11/09/2026.*
+*Herramientas para la Ciencia de Datos — Facultad de Negocios, UPC. Paquete generado el 14/09/2026.*
